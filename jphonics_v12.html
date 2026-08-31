@@ -43,6 +43,8 @@
   .nav-links li:nth-child(4) a{color:#F59E0B;}
   .nav-links li:nth-child(1) a:hover,.nav-links li:nth-child(2) a:hover,.nav-links li:nth-child(3) a:hover,.nav-links li:nth-child(4) a:hover{opacity:.75;}
   .nav-links a:hover::after{width:100%;}
+  .menu-toggle{display:none;border:0;background:transparent;padding:10px;cursor:pointer;flex-direction:column;gap:5px;}
+  .menu-toggle span{display:block;width:26px;height:3px;background:var(--navy);border-radius:3px;}
   .nav-cta{background:linear-gradient(135deg,var(--coral),#FF8E53)!important;color:white!important;padding:10px 24px;border-radius:50px;font-weight:800!important;box-shadow:0 4px 15px rgba(255,107,107,.4);transition:transform .2s,box-shadow .2s!important;}
   .nav-cta:hover{transform:translateY(-2px)!important;box-shadow:0 6px 22px rgba(255,107,107,.55)!important;}
   .nav-cta::after{display:none!important;}
@@ -205,6 +207,10 @@
   .submit-btn{width:100%;padding:18px;background:linear-gradient(135deg,var(--coral),#FF8E53);color:white;font-family:'Baloo 2',cursive;font-weight:800;font-size:18px;border:none;border-radius:50px;cursor:pointer;box-shadow:0 8px 24px rgba(255,107,107,.4);transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;}
   .submit-btn:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(255,107,107,.55);}
   .form-note{text-align:center;font-size:13px;color:#777;margin-top:14px;font-weight:600;}
+  .form-status{display:none;margin:14px 0 0;text-align:center;font-size:14px;line-height:1.5;font-weight:700;}
+  .form-status.show{display:block;}
+  .form-status.error{color:#b42318;}
+  .form-status a{color:inherit;text-decoration:underline;}
   .success-msg{display:none;text-align:center;padding:40px;}
   .success-msg.show{display:block;}
   .success-msg .emoji{font-size:90px;animation:float 3s ease-in-out infinite;}
@@ -250,6 +256,13 @@
   .reveal.visible{opacity:1;transform:translateY(0);}
 
   @media(max-width:900px){
+    nav{position:sticky;top:0;z-index:20;}
+    .menu-toggle{display:flex;}
+    .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);padding:10px 6%;box-shadow:0 10px 24px rgba(0,0,0,.10);gap:0;flex-direction:column;}
+    .nav-links.open{display:flex;}
+    .nav-links li{width:100%;}
+    .nav-links a{display:block;padding:14px 0;font-size:17px;}
+    .nav-links .nav-cta{display:inline-block;margin:6px 0 10px;padding:11px 20px;}
     #home{flex-direction:column;text-align:center;padding-top:50px;}
     .hero-btns{justify-content:center;}
     .hero-stats{justify-content:center;}
@@ -300,7 +313,8 @@
       <div class="logo-sub-text">English Literacy Education Centre 🇦🇺</div>
     </div>
   </a>
-  <ul class="nav-links">
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu"><span></span><span></span><span></span></button>
+  <ul class="nav-links" id="primary-nav">
     <li><a href="#about">About Us</a></li>
     <li><a href="#programs">Programs</a></li>
     <li><a href="#all-programs">All Courses</a></li>
@@ -610,6 +624,7 @@
           <textarea id="notes" placeholder="Tell us about your child's current reading/writing level, or any questions you have..."></textarea>
         </div>
         <button class="submit-btn" onclick="submitForm()">🚀 Reserve My Free Assessment Spot</button>
+        <p class="form-status" id="form-status" aria-live="polite"></p>
         <p class="form-note">✅ 100% Free · No pressure</p>
       </div>
       <div class="success-msg" id="success-msg">
@@ -934,6 +949,13 @@ function submitForm(){
   const notes=document.getElementById('notes').value.trim();
   if(!p||!c||!e||!ph){alert('Please fill in your name, child\'s name, email, and phone number 😊');return;}
   const btn=document.querySelector('.submit-btn');
+  const status=document.getElementById('form-status');
+  const setStatus=(message,isError=false)=>{
+    status.innerHTML=message;
+    status.classList.toggle('show',Boolean(message));
+    status.classList.toggle('error',isError);
+  };
+  setStatus('');
   btn.disabled=true;
   btn.innerHTML='⏳ Sending...';
   const params={
@@ -945,35 +967,53 @@ function submitForm(){
     program_interest:program,
     notes:notes||'No additional notes'
   };
-  // Try EmailJS first, fall back to mailto if it fails
-  emailjs.send('service_ivavbte','template_3opdjya',params)
-    .then((response)=>{
+  function showFallback(){
+    const subject=encodeURIComponent('Free Assessment Request — '+c);
+    const body=encodeURIComponent(
+      'Hi J Phonics Team,\n\n' +
+      'I would like to book a free assessment for my child.\n\n' +
+      'Parent Name: ' + p + '\n' +
+      'Child Name: ' + c + '\n' +
+      'Email: ' + e + '\n' +
+      'Phone: ' + ph + '\n' +
+      'Year Level / Age: ' + age + '\n' +
+      'Program Interest: ' + program + '\n' +
+      'Additional Notes: ' + (notes||'None') + '\n\n' +
+      'Thank you!'
+    );
+    const mailto='mailto:info@jphonicsenglish.com?subject='+subject+'&body='+body;
+    setStatus('We could not send the form automatically. <a href="'+mailto+'">Click here to email us instead</a>.',true);
+    btn.disabled=false;
+    btn.innerHTML='🚀 Reserve My Free Assessment Spot';
+  }
+
+  const sendRequest=Promise.resolve().then(()=>emailjs.send('service_ivavbte','template_3opdjya',params));
+  const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),12000));
+  Promise.race([sendRequest,timeout])
+    .then(()=>{
       document.getElementById('booking-form').style.display='none';
       document.getElementById('success-msg').classList.add('show');
       document.getElementById('booking').scrollIntoView({behavior:'smooth'});
     })
-    .catch((err)=>{
-      // Fallback: open mailto with all form details pre-filled
-      const subject=encodeURIComponent('Free Assessment Request — ' + c);
-      const body=encodeURIComponent(
-        'Hi J Phonics Team,\n\n' +
-        'I would like to book a free assessment for my child.\n\n' +
-        'Parent Name: ' + p + '\n' +
-        'Child Name: ' + c + '\n' +
-        'Email: ' + e + '\n' +
-        'Phone: ' + ph + '\n' +
-        'Year Level / Age: ' + age + '\n' +
-        'Program Interest: ' + program + '\n' +
-        'Additional Notes: ' + (notes||'None') + '\n\n' +
-        'Thank you!'
-      );
-      window.location.href = 'mailto:info@jphonicsenglish.com?subject=' + subject + '&body=' + body;
-      btn.disabled=false;
-      btn.innerHTML='🚀 Reserve My Free Assessment Spot';
-      document.getElementById('booking-form').style.display='none';
-      document.getElementById('success-msg').classList.add('show');
-    });
+    .catch((err)=>{ console.warn('EmailJS error:',err); showFallback(); });
 }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const toggle=document.querySelector('.menu-toggle');
+  const menu=document.getElementById('primary-nav');
+  if(!toggle||!menu)return;
+  toggle.addEventListener('click',()=>{
+    const open=menu.classList.toggle('open');
+    toggle.setAttribute('aria-expanded',String(open));
+    toggle.setAttribute('aria-label',open?'Close menu':'Open menu');
+  });
+  menu.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{
+    menu.classList.remove('open');
+    toggle.setAttribute('aria-expanded','false');
+    toggle.setAttribute('aria-label','Open menu');
+  }));
+});
 </script>
 </body>
 </html>
