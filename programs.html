@@ -48,6 +48,7 @@
   .nav-cta{background:linear-gradient(135deg,var(--coral),#FF8E53)!important;color:white!important;padding:10px 24px;border-radius:50px;font-weight:800!important;box-shadow:0 4px 15px rgba(255,107,107,.4);transition:transform .2s,box-shadow .2s!important;}
   .nav-cta:hover{transform:translateY(-2px)!important;box-shadow:0 6px 22px rgba(255,107,107,.55)!important;}
   .nav-cta::after{display:none!important;}
+  .mobile-header-book,.mobile-book-float{display:none;}
 
   /* HERO */
   #home{position:relative;z-index:1;min-height:92vh;padding:80px 6% 60px;display:flex;align-items:center;gap:60px;}
@@ -262,7 +263,15 @@
   .reveal.visible{opacity:1;transform:translateY(0);}
 
   @media(max-width:900px){
-    nav{position:sticky;top:0;z-index:20;}
+    body{padding-bottom:calc(82px + env(safe-area-inset-bottom));}
+    nav{position:sticky;top:0;z-index:200;gap:6px;padding:0 3%;}
+    .logo{flex:1;min-width:0;gap:8px;}
+    .logo-img{width:44px;height:44px;flex:0 0 44px;}
+    .logo-wordmark{min-width:0;}
+    .logo-main{font-size:clamp(17px,4.8vw,22px);line-height:1;}
+    .logo-sub-text{font-size:6.5px;letter-spacing:.02em;white-space:nowrap;}
+    .mobile-header-book{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:linear-gradient(135deg,var(--coral),#FF8E53);color:#fff;text-decoration:none;font-weight:900;font-size:11px;line-height:1;padding:9px 10px;border-radius:999px;box-shadow:0 5px 15px rgba(255,107,107,.38);}
+    .mobile-book-float{display:flex;position:fixed;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:999;align-items:center;justify-content:center;gap:9px;width:min(88vw,360px);padding:15px 22px;border-radius:999px;background:linear-gradient(135deg,var(--coral),#FF8E53);color:#fff;text-decoration:none;font-size:16px;font-weight:900;letter-spacing:.01em;box-shadow:0 12px 30px rgba(255,107,107,.5),0 3px 10px rgba(26,43,74,.22);border:2px solid rgba(255,255,255,.9);}
     .menu-toggle{display:flex;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);padding:10px 6%;box-shadow:0 10px 24px rgba(0,0,0,.10);gap:0;flex-direction:column;}
     .nav-links.open{display:flex;}
@@ -324,6 +333,7 @@
       <div class="logo-sub-text">English Literacy Education Centre 🇦🇺</div>
     </div>
   </a>
+  <a href="contact.html#booking" class="mobile-header-book" aria-label="Book a free assessment">Book</a>
   <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu"><span></span><span></span><span></span></button>
   <ul class="nav-links" id="primary-nav">
     <li><a href="index.html#about">About Us</a></li>
@@ -760,5 +770,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   }));
 });
 </script>
+<a href="contact.html#booking" class="mobile-book-float" aria-label="Book a free assessment"><span aria-hidden="true">🎉</span> Book Free Assessment</a>
 </body>
 </html>
